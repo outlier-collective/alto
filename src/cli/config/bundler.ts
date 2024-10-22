@@ -105,18 +105,13 @@ export const bundlerArgsSchema = z.object({
 
             return values.length > 0
         }, "Must contain at least one method if specified")
-        .refine(
-            (values) => {
-                if (values === null) return true
+        .refine((values) => {
+            if (values === null) return true
 
-                return values.every((value: string) =>
-                    rpcMethodNames.includes(value)
-                )
-            },
-            `Unknown method specified, available methods: ${rpcMethodNames.join(
-                ","
-            )}`
-        ),
+            return values.every((value: string) =>
+                rpcMethodNames.includes(value)
+            )
+        }, `Unknown method specified, available methods: ${rpcMethodNames.join(",")}`),
     "refilling-wallets": z.boolean().default(true),
     "aa95-gas-multiplier": z.string().transform((val) => BigInt(val)),
     "enable-instant-bundling-endpoint": z.boolean()
@@ -213,6 +208,11 @@ export const gasEstimationArgsSchema = z.object({
         .default("1000000")
 })
 
+export const clerkJwtKeyArgsSchema = z.object({
+    "clerk-jwt-key-dev": z.string(),
+    "clerk-jwt-key-prod": z.string()
+})
+
 export type IBundlerArgs = z.infer<typeof bundlerArgsSchema>
 export type IBundlerArgsInput = z.input<typeof bundlerArgsSchema>
 
@@ -247,7 +247,8 @@ export const optionArgsSchema = z.object({
     ...rpcArgsSchema.shape,
     ...bundleCopmressionArgsSchema.shape,
     ...debugArgsSchema.shape,
-    ...gasEstimationArgsSchema.shape
+    ...gasEstimationArgsSchema.shape,
+    ...clerkJwtKeyArgsSchema.shape
 })
 
 export type IOptions = z.infer<typeof optionArgsSchema>
