@@ -15,6 +15,10 @@ export enum ExecutionErrors {
     UserOperationReverted = -32521
 }
 
+export enum AuthenticationErrors {
+    Unauthorized = -32541
+}
+
 export class RpcError extends Error {
     code?: number
     // biome-ignore lint/suspicious/noExplicitAny: it's a generic type
