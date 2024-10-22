@@ -5,7 +5,8 @@ import {
     ValidationErrors,
     altoVersions,
     bundlerRequestSchema,
-    jsonRpcSchema
+    jsonRpcSchema,
+    AuthenticationErrors
 } from "@alto/types"
 import type { Metrics } from "@alto/utils"
 import cors from "@fastify/cors"
@@ -24,6 +25,7 @@ import { fromZodError } from "zod-validation-error"
 import RpcReply from "../utils/rpc-reply"
 import type { IRpcEndpoint } from "./rpcHandler"
 import type { AltoConfig } from "../createConfig"
+import { verifyToken } from "@clerk/backend"
 
 // jsonBigIntOverride.ts
 const originalJsonStringify = JSON.stringify
@@ -32,7 +34,7 @@ JSON.stringify = (
     // biome-ignore lint/suspicious/noExplicitAny: it's a generic type
     value: any,
     replacer?: // biome-ignore lint/suspicious/noExplicitAny: it's a generic type
-    ((this: any, key: string, value: any) => any) | (string | number)[] | null,
+        ((this: any, key: string, value: any) => any) | (string | number)[] | null,
     space?: string | number
 ): string => {
     // biome-ignore lint/suspicious/noExplicitAny: it's a generic type
@@ -224,6 +226,32 @@ export class Server {
         reply.rpcStatus = "failed" // default to failed
         let requestId: number | null = null
 
+        const authToken = request.headers.authorization
+        let isAuthed = false
+
+        try {
+            await verifyToken(authToken ?? "", {
+                jwtKey: this.config.clerkJwtKeyDev
+            })
+            isAuthed = true
+        } catch (e) { }
+
+        if (!isAuthed) {
+            try {
+                await verifyToken(authToken ?? "", {
+                    jwtKey: this.config.clerkJwtKeyProd
+                })
+                isAuthed = true
+            } catch (e) { }
+        }
+
+        if (!isAuthed) {
+            throw new RpcError(
+                "unauthorized",
+                AuthenticationErrors.Unauthorized
+            )
+        }
+
         const versionParsingResult = altoVersions.safeParse(
             (request.params as any)?.version ?? this.config.defaultApiVersion
         )
@@ -338,11 +366,11 @@ export class Server {
                     data:
                         bundlerRequest.method ===
                             "eth_getUserOperationReceipt" &&
-                        jsonRpcResponse.result
+                            jsonRpcResponse.result
                             ? {
-                                  ...jsonRpcResponse,
-                                  result: "<reduced>"
-                              }
+                                ...jsonRpcResponse,
+                                result: "<reduced>"
+                            }
                             : jsonRpcResponse, // do not log the full result for eth_getUserOperationReceipt to reduce log size
                     method: bundlerRequest.method
                 },
