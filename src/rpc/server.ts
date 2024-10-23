@@ -117,6 +117,9 @@ export class Server {
         this.fastify.decorateRequest("rpcMethod", null)
         this.fastify.decorateReply("rpcStatus", null)
 
+        const chainId = this.config.chainId
+        const basePath = `/bundler/${chainId}`
+
         this.fastify.addHook("onResponse", (request, reply) => {
             const ignoredRoutes = ["/health", "/metrics"]
             if (ignoredRoutes.includes(request.routeOptions.url)) {
@@ -140,9 +143,9 @@ export class Server {
                 .observe(durationSeconds)
         })
 
-        this.fastify.post("/rpc", this.rpcHttp.bind(this))
-        this.fastify.post("/:version/rpc", this.rpcHttp.bind(this))
-        this.fastify.post("/", this.rpcHttp.bind(this))
+        this.fastify.post(`${basePath}/rpc`, this.rpcHttp.bind(this))
+        this.fastify.post(`${basePath}/:version/rpc`, this.rpcHttp.bind(this))
+        this.fastify.post(`${basePath}/`, this.rpcHttp.bind(this))
 
         if (config.websocket) {
             this.fastify.register((fastify) => {
