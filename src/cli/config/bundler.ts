@@ -208,6 +208,10 @@ export const gasEstimationArgsSchema = z.object({
         .default("1000000")
 })
 
+export const chainIdSchema = z.object({
+    "chain-id": z.number()
+})
+
 export const clerkJwtKeyArgsSchema = z.object({
     "clerk-jwt-key-dev": z.string(),
     "clerk-jwt-key-prod": z.string()
@@ -248,7 +252,8 @@ export const optionArgsSchema = z.object({
     ...bundleCopmressionArgsSchema.shape,
     ...debugArgsSchema.shape,
     ...gasEstimationArgsSchema.shape,
-    ...clerkJwtKeyArgsSchema.shape
+    ...clerkJwtKeyArgsSchema.shape,
+    ...chainIdSchema.shape
 })
 
 export type IOptions = z.infer<typeof optionArgsSchema>
