@@ -151,14 +151,14 @@ export class Server {
             this.fastify.register((fastify) => {
                 fastify.route({
                     method: "GET",
-                    url: "/:version/rpc",
+                    url: `${basePath}/:version/rpc`,
                     handler: async (request, reply) => {
                         const version = (request.params as any).version
 
                         await reply
                             .status(404)
                             .send(
-                                `GET request to /${version}/rpc is not supported, use POST isntead`
+                                `GET request to ${basePath}/${version}/rpc is not supported, use POST instead`
                             )
                     },
                     wsHandler: (socket: WebSocket.WebSocket, request) => {
